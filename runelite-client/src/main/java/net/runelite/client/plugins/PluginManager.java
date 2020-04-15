@@ -106,6 +106,9 @@ public class PluginManager
 	private final Groups groups;
 	private final File settingsFileInput;
 
+	@Inject
+	ExternalPluginLoader externalPluginLoader;
+
 	@Setter
 	boolean isOutdated;
 
@@ -286,6 +289,12 @@ public class PluginManager
 			log.warn("Unable to reset plugin configuration", ex);
 		}
 	}
+
+	public void loadExternalPlugins()
+	{
+		externalPluginLoader.scanAndLoad();
+	}
+
 	public void loadCorePlugins() throws IOException
 	{
 		plugins.addAll(scanAndInstantiate(getClass().getClassLoader(), PLUGIN_PACKAGE, false));
@@ -368,6 +377,12 @@ public class PluginManager
 			{
 				log.warn("Class {} has plugin descriptor, but is not a plugin",
 					clazz);
+				continue;
+			}
+
+			if (external && pluginDescriptor.type() != PluginType.EXTERNAL)
+			{
+				log.error("Class {} is using the external plugin loader but doesn't have PluginType.EXTERNAL", clazz);
 				continue;
 			}
 
