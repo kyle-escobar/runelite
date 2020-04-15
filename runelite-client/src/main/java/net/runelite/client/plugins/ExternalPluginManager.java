@@ -119,7 +119,6 @@ public class ExternalPluginManager
 	@Getter(AccessLevel.PUBLIC)
 	private UpdateManager updateManager;
 	private Map<String, PluginInfo.PluginRelease> lastPluginRelease = new HashMap<>();
-	private Set<PluginType> pluginTypes = Set.of(PluginType.values());
 
 	@Inject
 	public ExternalPluginManager(
@@ -639,29 +638,17 @@ public class ExternalPluginManager
 			Class<? extends Plugin> clazz = plugin.getClass();
 			PluginDescriptor pluginDescriptor = clazz.getAnnotation(PluginDescriptor.class);
 
-			try
+			if (pluginDescriptor == null)
 			{
-				if (pluginDescriptor == null)
+				if (clazz.getSuperclass() == Plugin.class)
 				{
-					if (clazz.getSuperclass() == Plugin.class)
-					{
-						log.warn("Class {} is a plugin, but has no plugin descriptor", clazz);
-						continue;
-					}
-				}
-				else if (clazz.getSuperclass() != Plugin.class)
-				{
-					log.warn("Class {} has plugin descriptor, but is not a plugin", clazz);
-					continue;
-				}
-				else if (!pluginTypes.contains(pluginDescriptor.type()))
-				{
+					log.warn("Class {} is a plugin, but has no plugin descriptor", clazz);
 					continue;
 				}
 			}
-			catch (EnumConstantNotPresentException e)
+			else if (clazz.getSuperclass() != Plugin.class)
 			{
-				log.warn("{} has an invalid plugin type of {}", clazz, e.getMessage());
+				log.warn("Class {} has plugin descriptor, but is not a plugin", clazz);
 				continue;
 			}
 
